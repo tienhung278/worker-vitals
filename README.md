@@ -11,10 +11,12 @@ Base API path: /api/v1
 - Prerequisites
 - Setup and Environment
 - Backend: Develop, Build, Run
+- Frontend: Develop, Build, Run
 - Database and Migrations
 - API Reference
 - Security and Performance Notes
 - Testing (Real Database)
+- Frontend Stack
 - Prompts Used
 - The Engineering Process
 - Troubleshooting
@@ -26,6 +28,7 @@ The dashboard ingests vital sign data (workerId, heartRate, temperature) and per
 
 ## ARCHITECTURE
 - Backend: NestJS 10, TypeORM 0.3, PostgreSQL, Jest for tests.
+- Frontend: Next.js (latest) using the App Router.
 - Database: PostgreSQL with a single table vital_signs.
 
 
@@ -127,6 +130,9 @@ TypeORM DataSource is configured at backend\src\typeorm.datasource.ts. Migration
 - when I execute the migration, the new file should be in the src/migrations folder
 - the endpoint should start with `api` and aply the versioning
 - now implement the unit test. When executing, test cases need to use the database test, don't use mock data or mock repository. The testing database name is the current database with suffix "_test"
+- now start to implement the frontend using the latest next.js. All files should be in the frontend folder. Design the project structure follow the most popular pattern for next.js application
+- in the fetchLatestVitals method, don't use any, the response returns the VitalSign array
+- change the vital form component to server instead of client component
 
 
 ## THE ENGINEERING PROCESS
@@ -155,6 +161,10 @@ TypeORM DataSource is configured at backend\src\typeorm.datasource.ts. Migration
      - Issue: Outdated patterns (e.g., relying solely on synchronize=true, scattered configuration).
      - Fix: Centralized configuration with @nestjs/config, enabled autoLoadEntities, and limited synchronize to non-production; set up TypeORM migrations for schema evolution. Removed throttler per later requirement.
      - Thought process: Adhere to NestJS 10 and TypeORM 0.3 conventions to reduce surprise and improve maintainability.
+  7) Server components conversion (Frontend)
+     - Issue: The dashboard relied on client components, which is with the later requirement to move to Server Components and a server-handled form.
+     - Fix: Converted the main dashboard page to a Server Component and implemented the VitalForm as a server action. Validation and bounds checking are performed on the server action before submitting to the backend; after submission, revalidatePath('/') ensures the latest vitals render on the next request.
+     - Thought process: Align with Next.js Server Components guidance for simpler data fetching, reduced client JS, and consistent server-side validation.
 
 ### General approach
   - Implement the minimal viable backend, then iterate to correct convention/security/performance gaps.
@@ -164,3 +174,31 @@ TypeORM DataSource is configured at backend\src\typeorm.datasource.ts. Migration
 - Windows PowerShell: Use `;` to separate commands instead of `&&`.
 - Running backend scripts from root: prefix with `npm --prefix backend` (e.g., `npm --prefix backend run build`).
 - Postgres connection errors: verify .env credentials and that the service is running. For tests, ensure you can create databases (permission to create `${DB_NAME}_test`).
+
+
+## FRONTEND: DEVELOP, BUILD, RUN
+- Install dependencies:
+  - PowerShell: npm --prefix frontend install
+- Start in development:
+  - npm --prefix frontend run dev
+  - Opens http://localhost:3001 (configured in frontend\package.json)
+- Build (optimize for production):
+  - npm --prefix frontend run build
+- Start production server:
+  - npm --prefix frontend run start
+- Environment:
+  - Copy frontend\.env.example to frontend\.env and adjust:
+    - NEXT_PUBLIC_API_BASE_URL=http://localhost:3000
+    - NEXT_PUBLIC_WORKER_ID=worker-123
+- Notes:
+  - Tailwind CSS is configured via @tailwindcss/postcss in frontend\postcss.config.js.
+  - The dashboard page renders on the server; the vitals list uses client-side caching and refetching via TanStack Query.
+
+## FRONTEND STACK
+- Next.js App Router
+  - Layout at frontend\app\layout.tsx; page at frontend\app\page.tsx.
+- Form handling (Server Action)
+  - components\VitalForm is implemented as a server action; validates heartRate int [20..300] and temperature [25..45] and posts to POST /api/v1/vitals, then revalidates '/'.
+- Typesafety
+  - Shared interface at frontend\types\vitals.ts.
+  - fetchLatestVitals returns Promise<VitalSign[]> (no any).
