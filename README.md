@@ -1,8 +1,6 @@
-# Worker Vitals API (NestJS)
+# Worker Vitals Application
 
-Minimal, fullstack application for a real-time worker vitals dashboard. The backend is implemented with NestJS and PostgreSQL using TypeORM.
-
-Base API path: /api/v1
+Minimal, fullstack application for a real-time worker vitals dashboard
 
 
 ## CONTENTS
